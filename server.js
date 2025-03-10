@@ -1,26 +1,22 @@
 import http from "http";
 import dotenv from "dotenv";
-import taskRoutes from "./routes/tasks.js";
+import { handleTasksRoutes } from "./routes/tasks.js";
+import { connectDB } from "./db/db.js";
 
 dotenv.config();
 
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
+async function startServer() {
+  await connectDB();
+  
+  const server = http.createServer((req, res) => {
+    handleTasksRoutes(req, res);
+  });
 
-const server = http.createServer((req, res) => {
-  if (req.url === "/tasks" && req.method === "GET") {
-    return taskRoutes.handleGetTasks(req, res);
-  }
+  server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
-
-  if (req.url === "/tasks" && req.method === "POST") {
-    return taskRoutes.handlePostTask(req, res);
-  }
-
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ message: `Server is running on port ${port}` }));
-});
-
-server.listen(port, () => {
-  console.log(`Server is listening on http://localhost:${port}`);
-});
+startServer().catch((err) => console.error("Failed to start server", err));
