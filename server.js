@@ -9,9 +9,15 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   await connectDB();
-  
+
   const server = http.createServer((req, res) => {
-    handleTasksRoutes(req, res);
+    if (req.url.startsWith("/auth")) {
+      handleAuthRoutes(req, res);
+    } else {
+      authenticate(req, res, () => {
+        handleTasksRoutes(req, res);
+      });
+    }
   });
 
   server.listen(PORT, () => {

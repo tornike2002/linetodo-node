@@ -4,9 +4,10 @@ import { getDB } from "../db/db.js";
 export async function handleTasksRoutes(req, res) {
   const db = await getDB();
   const tasksCollection = db.collection("tasks");
-  if (req.method === "GET" && req.url === "/tasks") {
+  if (req.method === "GET" && req.url.startsWith("/tasks")) {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
+      
       const completed = url.searchParams.get("completed");
       const priority = url.searchParams.get("priority");
 
@@ -19,6 +20,7 @@ export async function handleTasksRoutes(req, res) {
       }
 
       const tasks = await tasksCollection.find(filter).toArray();
+
       if (tasks.length === 0) {
         res.writeHead(404, {
           "Content-Type": "application/json",
