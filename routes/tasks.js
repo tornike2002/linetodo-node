@@ -7,11 +7,12 @@ export async function handleTasksRoutes(req, res) {
   if (req.method === "GET" && req.url.startsWith("/tasks")) {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      
+
       const completed = url.searchParams.get("completed");
       const priority = url.searchParams.get("priority");
 
-      const filter = {};
+      const filter = { userId: req.user.userId};
+ 
       if (completed !== null) {
         filter.completed = completed === "true";
       }
@@ -53,15 +54,10 @@ export async function handleTasksRoutes(req, res) {
       try {
         const newTask = JSON.parse(body);
 
-        if (!newTask.title || !newTask.description) {
-          res.writeHead(400, {
-            "Content-Type": "application/json",
-          });
-          res.end(
-            JSON.stringify({ message: "Title and description are required" })
-          );
-          return;
+        if (!newTask.title) {
+          throw new Error("Task is required");
         }
+        newTask.userId = req.user.userId;
 
         const result = await tasksCollection.insertOne(newTask);
         res.writeHead(201, {
@@ -99,6 +95,7 @@ export async function handleTasksRoutes(req, res) {
 
       const result = await tasksCollection.deleteOne({
         _id: new ObjectId(taskId),
+        userId: req.user.userId,
       });
 
       if (result.deletedCount > 0) {
@@ -141,7 +138,7 @@ export async function handleTasksRoutes(req, res) {
       try {
         const updates = JSON.parse(body);
         const result = await tasksCollection.updateOne(
-          { _id: new ObjectId(taskId) },
+          { _id: new ObjectId(taskId), userId: req.user.userId },
           { $set: updates }
         );
         if (result.matchedCount === 0) {

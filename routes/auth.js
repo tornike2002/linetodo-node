@@ -43,7 +43,10 @@ export async function handleAuthRoutes(req, res) {
           "Content-Type": "application/json",
         });
         res.end(
-          JSON.stringify({ message: "User created", userID: result.insertedId })
+          JSON.stringify({
+            message: "User created",
+            userId: result.insertedId,
+          })
         );
       } catch (error) {
         res.writeHead(500, {
@@ -86,9 +89,13 @@ export async function handleAuthRoutes(req, res) {
           res.end(JSON.stringify({ message: "Invalid Credentials" }));
           return;
         }
-        const token = jwt.sign({ username: user.username }, SECRET_KEY, {
-          expiresIn: "1h",
-        });
+        const token = jwt.sign(
+          { userId: user._id, username: user.username },
+          SECRET_KEY,
+          {
+            expiresIn: "1h",
+          }
+        );
 
         res.writeHead(200, {
           "Content-Type": "application/json",
