@@ -5,13 +5,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY = process.env.JWT_SECRET;
 
 export async function handleAuthRoutes(req, res) {
   const db = await getDB();
   const userCollection = db.collection("users");
 
-  if (req.method === "POST" && req.url === "auth/register") {
+  if (req.method === "POST" && req.url === "/auth/register") {
     let body = "";
     req.on("data", (chunck) => {
       body += chunck.toString();
@@ -57,7 +57,7 @@ export async function handleAuthRoutes(req, res) {
         );
       }
     });
-  } else if (req.method === "POST" && req.url === "auth/login") {
+  } else if (req.method === "POST" && req.url === "/auth/login") {
     let body = "";
     req.on("data", (chunck) => {
       body += chunck.toString();

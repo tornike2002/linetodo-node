@@ -1,6 +1,8 @@
 import http from "http";
 import dotenv from "dotenv";
 import { handleTasksRoutes } from "./routes/tasks.js";
+import { handleAuthRoutes } from "./routes/auth.js";
+import { authenticate } from "./middleware/authMiddleware.js";
 import { connectDB } from "./db/db.js";
 
 dotenv.config();
