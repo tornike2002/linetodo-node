@@ -5,12 +5,43 @@ export async function handleTasksRoutes(req, res) {
   const db = await getDB();
   const tasksCollection = db.collection("tasks");
   if (req.method === "GET" && req.url === "/tasks") {
-    const tasks = await tasksCollection.find({}).toArray();
-    res.writeHead(200, {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache",
-    });
-    res.end(JSON.stringify(tasks));
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const completed = url.searchParams.get("completed");
+      const priority = url.searchParams.get("priority");
+
+      const filter = {};
+      if (completed !== null) {
+        filter.completed = completed === "true";
+      }
+      if (priority) {
+        filter.priority = priority;
+      }
+
+      const tasks = await tasksCollection.find(filter).toArray();
+      if(tasks.length === 0) {
+        res.writeHead(404, {
+          "Content-Type": "application/json",
+        });
+        res.end(JSON.stringify({ message: "No tasks found" }));
+        return;
+      }
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache",
+      });
+      res.end(JSON.stringify(tasks));
+    } catch (error) {
+      res.writeHead(500, {
+        "Content-Type": "application/json",
+      });
+      res.end(
+        JSON.stringify({
+          message: "Internal Server Error",
+          error: error.message,
+        })
+      );
+    }
   } else if (req.method === "POST" && req.url === "/tasks") {
     let body = "";
     req.on("data", (chunck) => {
