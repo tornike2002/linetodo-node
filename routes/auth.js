@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { sendResetEmail } from "../utils/email.js";
-
+import { logError, logInfo } from "../utils/logger.js";
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -99,11 +99,14 @@ export async function handleAuthRoutes(req, res) {
           }
         );
 
+        logInfo(`User ${user.username} logged in`);
+
         res.writeHead(200, {
           "Content-Type": "application/json",
         });
         res.end(JSON.stringify({ token }));
       } catch (error) {
+        logError(`Error logging in: ${user.username} - ${error.message}`);
         res.writeHead(500, {
           "Content-Type": "application/json",
         });
