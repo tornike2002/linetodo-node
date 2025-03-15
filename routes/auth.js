@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
+
+
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -113,5 +115,19 @@ export async function handleAuthRoutes(req, res) {
         );
       }
     });
+  } else if (method === "POST" && url === "/auth/request-reset") {
+    let body = "";
+    req.on("data", (chunck) => {
+      body += chunck.toString();
+    });
+    req.on("end", async () => {
+      try {
+      } catch (error) {}
+    });
+  } else {
+    res.writeHead(404, {
+      "Content-Type": "application/json",
+    });
+    res.end(JSON.stringify({ message: "Route not found" }));
   }
 }
