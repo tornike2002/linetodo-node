@@ -141,7 +141,7 @@ export async function handleAuthRoutes(req, res) {
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpiry = Date.now() + 3600000;
 
-        await userCollection.update(
+        await userCollection.updateOne(
           { email },
           { $set: { resetToken, resetTokenExpiry } }
         );
@@ -170,33 +170,26 @@ export async function handleAuthRoutes(req, res) {
     const urlParams = new URL(req.url, `http://${req.headers.host}`);
     const token = urlParams.searchParams.get("token");
     let body = "";
-    req.on("data", (chunck) => {
-      body += chunck.toString();
+    req.on("data", (chunk) => {
+      body += chunk.toString();
     });
-
     req.on("end", async () => {
       try {
         const { newPassword } = JSON.parse(body);
         if (!token || !newPassword) {
-          throw new Error("Token and new password are required");
+          throw new Error("All fields are required");
         }
 
         const user = await userCollection.findOne({ resetToken: token });
-
         if (!user || user.resetTokenExpiry < Date.now()) {
-          res.writeHead(404, {
-            "Content-Type": "application/json",
-          });
+          res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Invalid or expired token" }));
           return;
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
         await userCollection.updateOne(
-          {
-            email: user.emai - l,
-          },
+          { email: user.email },
           {
             $set: {
               password: hashedPassword,
@@ -206,11 +199,12 @@ export async function handleAuthRoutes(req, res) {
           }
         );
 
-        res.writeHead(200, {
-          "Content-Type": "application/json",
-        });
+        res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Password reset successful" }));
-      } catch (error) {}
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: err.message }));
+      }
     });
   } else {
     res.writeHead(404, {
