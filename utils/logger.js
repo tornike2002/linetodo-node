@@ -1,7 +1,7 @@
 import fs from "fs";
 import winston from "winston";
 
-if (fs.existsSync("./logs")) {
+if (!fs.existsSync("./logs")) {
   fs.mkdirSync("./logs");
 }
 

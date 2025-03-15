@@ -11,8 +11,8 @@ export async function handleTasksRoutes(req, res) {
       const completed = url.searchParams.get("completed");
       const priority = url.searchParams.get("priority");
 
-      const filter = { userId: req.user.userId};
- 
+      const filter = { userId: req.user.userId };
+
       if (completed !== null) {
         filter.completed = completed === "true";
       }
@@ -20,7 +20,14 @@ export async function handleTasksRoutes(req, res) {
         filter.priority = priority;
       }
 
-      const tasks = await tasksCollection.find(filter).toArray();
+      const tasks = await tasksCollection
+        .find(filter)
+        .project({
+          title: 1,
+          completed: 1,
+          priority: 1,
+        })
+        .toArray();
 
       if (tasks.length === 0) {
         res.writeHead(404, {
