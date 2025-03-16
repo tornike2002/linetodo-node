@@ -1,11 +1,24 @@
 import { ObjectId } from "mongodb";
 import { getDB } from "../db/db.js";
+import { getCache, setCache, invalidateCache } from "../utils/cache.js";
 
 export async function handleTasksRoutes(req, res) {
   const db = await getDB();
   const tasksCollection = db.collection("tasks");
   if (req.method === "GET" && req.url.startsWith("/tasks")) {
     try {
+      const cacheKey = `tasks_${req.user.userId}`;
+      const cachedTasks = getCache(cacheKey);
+
+      if (cachedTasks) {
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=60",
+        });
+        res.end(JSON.stringify(cachedTasks));
+        return;
+      }
+
       const url = new URL(req.url, `http://${req.headers.host}`);
 
       const completed = url.searchParams.get("completed");
@@ -29,7 +42,7 @@ export async function handleTasksRoutes(req, res) {
           priority: 1,
         })
         .toArray();
-
+      setCache(cacheKey, tasks, 60);
       if (tasks.length === 0) {
         res.writeHead(404, {
           "Content-Type": "application/json",
@@ -68,6 +81,7 @@ export async function handleTasksRoutes(req, res) {
         newTask.userId = req.user.userId;
 
         const result = await tasksCollection.insertOne(newTask);
+        invalidateCache(`tasks_${req.user.userId}`);
         res.writeHead(201, {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
@@ -109,6 +123,7 @@ export async function handleTasksRoutes(req, res) {
       const result = await tasksCollection.deleteOne(filter);
 
       if (result.deletedCount > 0) {
+        invalidateCache(`tasks_${req.user.userId}`);
         res.writeHead(200, {
           "Content-Type": "application/json",
         });
@@ -161,6 +176,7 @@ export async function handleTasksRoutes(req, res) {
           res.end(JSON.stringify({ message: "Task not found" }));
           return;
         } else {
+          invalidateCache(`tasks_${req.user.userId}`);
           res.writeHead(200, {
             "Content-Type": "application/json",
           });
