@@ -20,22 +20,22 @@ async function startServer() {
         req,
         res,
         () => handleAuthRoutes(req, res),
-        30,
+        2,
         15 * 60 * 1000
       );
     } else {
-      rateLimiter(req, res, () => {
-        authenticate(
-          req,
-          res,
-          () => {
+      rateLimiter(
+        req,
+        res,
+        () => {
+          authenticate(req, res, () => {
             logInfo(`User ${req.user.username} accessed ${req.url}`);
             handleTasksRoutes(req, res);
-          },
-          60,
-          60 * 1000
-        );
-      });
+          });
+        },
+        2,
+        60 * 1000
+      );
     }
   });
 
