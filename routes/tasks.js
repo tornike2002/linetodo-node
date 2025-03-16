@@ -11,7 +11,8 @@ export async function handleTasksRoutes(req, res) {
       const completed = url.searchParams.get("completed");
       const priority = url.searchParams.get("priority");
 
-      const filter = { userId: req.user.userId };
+      const filter =
+        req.user.role === "admin" ? {} : { userId: req.user.userId };
 
       if (completed !== null) {
         filter.completed = completed === "true";
@@ -100,10 +101,12 @@ export async function handleTasksRoutes(req, res) {
         return;
       }
 
-      const result = await tasksCollection.deleteOne({
-        _id: new ObjectId(taskId),
-        userId: req.user.userId,
-      });
+      const filter =
+        req.user.role === "admin"
+          ? { _id: new ObjectId(taskId) }
+          : { _id: new ObjectId(taskId), userId: req.user.userId };
+
+      const result = await tasksCollection.deleteOne(filter);
 
       if (result.deletedCount > 0) {
         res.writeHead(200, {
@@ -144,10 +147,13 @@ export async function handleTasksRoutes(req, res) {
     req.on("end", async () => {
       try {
         const updates = JSON.parse(body);
-        const result = await tasksCollection.updateOne(
-          { _id: new ObjectId(taskId), userId: req.user.userId },
-          { $set: updates }
-        );
+        const filter =
+          req.user.role === "admin"
+            ? { _id: new ObjectId(taskId) }
+            : { _id: new ObjectId(taskId), userId: req.user.userId };
+        const result = await tasksCollection.updateOne(filter, {
+          $set: updates,
+        });
         if (result.matchedCount === 0) {
           res.writeHead(404, {
             "Content-Type": "application/json",

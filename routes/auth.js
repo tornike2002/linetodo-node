@@ -20,7 +20,7 @@ export async function handleAuthRoutes(req, res) {
     });
     req.on("end", async () => {
       try {
-        const { username, password, email, phone } = JSON.parse(body);
+        const { username, password, email, phone, role } = JSON.parse(body);
         if (!username || !password || !email || !phone) {
           throw new Error("All the fields are required");
         }
@@ -34,12 +34,13 @@ export async function handleAuthRoutes(req, res) {
           return;
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-
+        const userRole = role === "admin" ? "admin" : "user";
         const result = await userCollection.insertOne({
           username,
           email,
           password: hashedPassword,
           phone,
+          role: userRole,
         });
         res.writeHead(201, {
           "Content-Type": "application/json",
@@ -48,6 +49,7 @@ export async function handleAuthRoutes(req, res) {
           JSON.stringify({
             message: "User created",
             userId: result.insertedId,
+            role: userRole,
           })
         );
       } catch (error) {
@@ -92,7 +94,7 @@ export async function handleAuthRoutes(req, res) {
           return;
         }
         const token = jwt.sign(
-          { userId: user._id, username: user.username },
+          { userId: user._id, username: user.username, role: user.role },
           SECRET_KEY,
           {
             expiresIn: "1h",
@@ -104,7 +106,13 @@ export async function handleAuthRoutes(req, res) {
         res.writeHead(200, {
           "Content-Type": "application/json",
         });
-        res.end(JSON.stringify({ token }));
+        res.end(
+          JSON.stringify({
+            message: "Login successful",
+            token,
+            role: user.role,
+          })
+        );
       } catch (error) {
         logError(`Error logging in: ${user.username} - ${error.message}`);
         res.writeHead(500, {
