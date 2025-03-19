@@ -20,7 +20,7 @@ async function startServer() {
         req,
         res,
         () => handleAuthRoutes(req, res),
-        2,
+        30,
         15 * 60 * 1000
       );
     } else {
@@ -33,7 +33,7 @@ async function startServer() {
             handleTasksRoutes(req, res);
           });
         },
-        2,
+        60,
         60 * 1000
       );
     }

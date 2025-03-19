@@ -7,7 +7,9 @@ export async function handleTasksRoutes(req, res) {
   const tasksCollection = db.collection("tasks");
   if (req.method === "GET" && req.url.startsWith("/tasks")) {
     try {
-      const cacheKey = `tasks_${req.user.userId}`;
+      const urlParams = new URL(req, url, `http://${req.headers.host}`);
+      const sortOrder = urlParams.searchParams.get("sort") === "asc" ? 1 : -1;
+      const cacheKey = `tasks_${req.user.userId}_sort_${sortOrder}`;
       const cachedTasks = getCache(cacheKey);
 
       if (cachedTasks) {
@@ -33,14 +35,34 @@ export async function handleTasksRoutes(req, res) {
       if (priority) {
         filter.priority = priority;
       }
+      if (
+        urlParams.searchParams.has("startDate") ||
+        urlParams.searchParams.has("endDate")
+      ) {
+        filter.createdAt = {};
+
+        if (urlParams.searchParams.has("startDate")) {
+          filter.createdAt.$gte = new Date(
+            urlParams.searchParams.get("startDate")
+          );
+        }
+
+        if (urlParams.searchParams.has("endDate")) {
+          filter.createdAt.$lte = new Date(
+            urlParams.searchParams.get("endDate")
+          );
+        }
+      }
 
       const tasks = await tasksCollection
         .find(filter)
         .project({
-          title: 1,
+          task: 1,
           completed: 1,
           priority: 1,
+          createdAt: 1,
         })
+        .sort({ createdAt: sortOrder })
         .toArray();
       setCache(cacheKey, tasks, 60);
       if (tasks.length === 0) {
@@ -79,7 +101,8 @@ export async function handleTasksRoutes(req, res) {
           throw new Error("Task is required");
         }
         newTask.userId = req.user.userId;
-
+        newTask.createdAt = new Date();
+        newTask.completed = false;
         const result = await tasksCollection.insertOne(newTask);
         invalidateCache(`tasks_${req.user.userId}`);
         res.writeHead(201, {
