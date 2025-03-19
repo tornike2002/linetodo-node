@@ -9,7 +9,7 @@ export async function handleTasksRoutes(req, res) {
     try {
       const urlParams = new URL(req, url, `http://${req.headers.host}`);
       const sortOrder = urlParams.searchParams.get("sort") === "asc" ? 1 : -1;
-      const cacheKey = `tasks_${req.user.userId}_sort_${sortOrder}`;
+      const cacheKey = `tasks_${req.user.userId}_sort_${sortOrder}_completed_${completed}_priority_${priority}`;
       const cachedTasks = getCache(cacheKey);
 
       if (cachedTasks) {
@@ -23,8 +23,8 @@ export async function handleTasksRoutes(req, res) {
 
       const url = new URL(req.url, `http://${req.headers.host}`);
 
-      const completed = url.searchParams.get("completed");
-      const priority = url.searchParams.get("priority");
+      const completed = urlParams.searchParams.get("completed") || "all";
+      const priority = urlParams.searchParams.get("priority") || "all";
 
       const filter =
         req.user.role === "admin" ? {} : { userId: req.user.userId };
