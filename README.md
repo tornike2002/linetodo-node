@@ -1,4 +1,4 @@
-# Line ToDo App API Documentation
+# Linetodo-node App API Documentation
 
 ## _Base URL_
 
@@ -23,8 +23,8 @@ Register a new user.
 
 ```json
 {
-  "username": "john_doe",
-  "password": "securepassword"
+  "username": "Sara_smith",
+  "password": "yourPassword"
 }
 ```
 
@@ -46,8 +46,8 @@ Register a new user.
 
 ```json
 {
-  "username": "john_doe",
-  "password": "securepassword"
+  "username": "sara_smith",
+  "password": "yourPassword"
 }
 ```
 
@@ -69,7 +69,7 @@ Register a new user.
 
 ```json
 {
-  "email": "john_doe@example.com"
+  "email": "sara_smith@example.com"
 }
 ```
 
@@ -90,7 +90,7 @@ Register a new user.
 ```json
 {
   "token": "your-jwt-token",
-  "newPassword": "newsecurepassword"
+  "newPassword": "newPassword"
 }
 ```
 
